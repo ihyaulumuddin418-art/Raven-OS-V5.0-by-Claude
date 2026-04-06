@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raven OS v5.0</title>
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ── HEADER ── -->
+  <header class="app-header">
+
+    <!-- Brand -->
+    <div class="header-brand">
+      <div class="header-logo">🐦‍⬛</div>
+      <div>
+        <div class="header-title">Raven<span> OS</span></div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="header-status">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Online</span>
+    </div>
+
+    <!-- Actions -->
+    <div class="header-actions">
+
+      <!-- URL Toggle -->
+      <button class="icon-btn" id="url-toggle-btn" title="Toggle URL Mode">
+        🌐
+        <span class="tooltip">URL Mode</span>
+      </button>
+
+      <!-- Clear Chat -->
+      <button class="icon-btn" id="clear-btn">
+        🗑️
+        <span class="tooltip">Clear Chat</span>
+      </button>
+
+      <!-- Logout -->
+      <button class="icon-btn" id="logout-btn">
+        🚪
+        <span class="tooltip">Logout</span>
+      </button>
+
+    </div>
+  </header>
+
+  <!-- URL Mode Banner -->
+  <div class="url-banner" id="url-banner">
+    🌐 <strong>URL Mode Aktif</strong> — Tempel URL dalam pesan untuk scrape kontennya
+  </div>
+
+  <!-- ── CHAT AREA ── -->
+  <div class="chat-wrapper">
+    <div class="chat-messages" id="chat-messages">
+
+      <!-- Welcome screen (hidden setelah ada chat) -->
+      <div class="welcome-screen" id="welcome-screen">
+        <div class="welcome-icon">🐦‍⬛</div>
+        <div class="welcome-title">Halo, <span id="user-display-name">Din</span>!</div>
+        <div class="welcome-sub">Raven siap bantu koding, debug, atau ngobrol soal tech. Mau mulai dari mana?</div>
+
+        <div class="welcome-chips">
+          <div class="chip">Bantu debug kode ini</div>
+          <div class="chip">Buatkan REST API sederhana</div>
+          <div class="chip">Jelaskan cara kerja async/await</div>
+          <div class="chip">Review kode saya</div>
+          <div class="chip">Buat UI glassmorphism</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── INPUT AREA ── -->
+  <div class="input-area">
+
+    <!-- File preview bar -->
+    <div class="file-preview-bar" id="file-preview-bar">
+      📎
+      <span class="file-preview-name" id="file-preview-name">filename.txt</span>
+      <button class="file-remove-btn" id="file-remove-btn" onclick="window.FileModule.clear(); document.getElementById('file-preview-bar').classList.remove('show'); document.getElementById('file-input').value='';">✕</button>
+    </div>
+
+    <!-- Input row -->
+    <div class="input-row">
+      <div class="input-actions-left">
+
+        <!-- File attachment button -->
+        <label for="file-input" class="input-action-btn" title="Lampirkan file">
+          📎
+        </label>
+        <input type="file" id="file-input" style="display:none"
+          accept=".txt,.js,.ts,.jsx,.tsx,.html,.css,.json,.py,.java,.c,.cpp,.cs,.php,.rb,.go,.rs,.sh,.yaml,.yml,.md,.xml,.csv,.png,.jpg,.jpeg,.gif,.webp,.svg">
+
+      </div>
+
+      <!-- Text input -->
+      <textarea
+        id="chat-input"
+        placeholder="Ketik pesan atau tempel URL..."
+        rows="1"
+      ></textarea>
+
+      <!-- Send button -->
+      <button class="send-btn" id="send-btn" title="Kirim (Enter)">
+        ➤
+      </button>
+    </div>
+
+    <div class="input-footer">
+      Raven OS v5.0 · Protected by Raven Shield · Shift+Enter untuk baris baru
+    </div>
+  </div>
+
+</div>
+
+<!-- ── MODALS ── -->
+
+<!-- Clear Chat Modal -->
+<div class="modal-overlay" id="clear-modal">
+  <div class="modal-card">
+    <div class="modal-title">🗑️ Hapus Semua Chat?</div>
+    <div class="modal-sub">History chat akan dihapus permanen dari perangkat ini. Percakapan tidak bisa dikembalikan.</div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="clear-cancel">Batal</button>
+      <button class="modal-btn danger" id="clear-confirm">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- ── SCRIPTS ── -->
+<!-- Load urut: security dulu, lalu auth, features, terakhir core -->
+<script src="assets/js/security.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/features.js"></script>
+<script src="assets/js/core.js"></script>
+<script>
+  // Init app (termasuk auth guard)
+  initApp();
+</script>
+
+</body>
+</html>
