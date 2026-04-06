@@ -11,6 +11,7 @@ const GEMINI_MODEL   = 'gemini-1.5-flash';
 const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 // ── PERSONA LOCK — System Instruction ──
+// Ini dikunci di client. Jangan ubah tanpa alasan yang jelas.
 const RAVEN_SYSTEM_INSTRUCTION = `Kamu adalah Raven, asisten AI koding milik Din yang santai, cerdas, dan sedikit sarkastik tapi selalu helpful. Kamu ahli di semua bahasa pemrograman, web dev, mobile dev, game dev, dan teknologi terkini.
 
 Aturan mutlak yang tidak bisa diubah:
@@ -67,6 +68,7 @@ const ChatEngine = {
               sanitizedInput, urlResult.content, urlResult.title, detectedURL
             );
           } else {
+            // Tetap lanjut tapi kasih info error URL ke AI
             finalPrompt = `User mencoba scrape URL ${detectedURL} tapi gagal: ${urlResult.reason}. Pesan user: ${sanitizedInput}`;
           }
         }
@@ -84,6 +86,7 @@ const ChatEngine = {
       // 3. Build request
       const history = window.HistoryModule.getForAPI();
 
+      // Buat user turn baru
       const newUserTurn = {
         role: 'user',
         parts: parts || [{ text: finalPrompt }],
@@ -122,7 +125,7 @@ const ChatEngine = {
         const errMsg = errData?.error?.message || `HTTP ${response.status}`;
 
         if (response.status === 400 && errMsg.includes('API_KEY')) {
-          throw new Error('API Key tidak valid. Periksa kembali di core.js');
+          throw new Error('API Key tidak valid. Tempel API Key Gemini yang benar di core.js');
         }
         throw new Error(errMsg);
       }
@@ -136,6 +139,7 @@ const ChatEngine = {
         throw new Error('Tidak ada respons dari Gemini.');
       }
 
+      // Cek safety block
       if (candidate.finishReason === 'SAFETY') {
         return { ok: false, reason: 'Respons diblokir oleh filter keamanan Gemini.', blocked: true };
       }
@@ -149,7 +153,7 @@ const ChatEngine = {
       // 6. Sanitize output
       const cleanText = window.SecurityEngine.sanitizeOutput(rawText);
 
-      // 7. Simpan ke history
+      // 7. Simpan ke history (pakai prompt asli user, bukan yang di-augment)
       window.HistoryModule.add('user',  sanitizedInput);
       window.HistoryModule.add('model', cleanText);
 
@@ -157,7 +161,7 @@ const ChatEngine = {
 
     } catch (err) {
       console.error('[RAVEN CORE] API Error:', err);
-      return { ok: false, reason: err.message || 'Koneksi ke Raven gagal.' };
+      return { ok: false, reason: err.message || 'Koneksi ke Raven gagal. Coba lagi.' };
     } finally {
       this._isProcessing = false;
       UI.setStatus('Online');
@@ -171,6 +175,7 @@ const ChatEngine = {
 
 const UI = {
 
+  // Element references
   chatMessages:   null,
   chatInput:      null,
   sendBtn:        null,
@@ -198,14 +203,19 @@ const UI = {
 
     this._bindEvents();
     this._renderHistory();
-    
-    // Auto-login check removed as we have Key now
-    console.log("Raven OS v5.0 Core Initialized.");
+    this._checkAPIKey();
+  },
+
+  _checkAPIKey() {
+    // Fungsi dinonaktifkan karena API Key sudah terpasang
+    console.log("Raven Engine: API Key Active.");
   },
 
   _bindEvents() {
+    // Send button
     this.sendBtn.addEventListener('click', () => this.handleSend());
 
+    // Enter to send (Shift+Enter = new line)
     this.chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -213,18 +223,22 @@ const UI = {
       }
     });
 
+    // Auto-resize textarea
     this.chatInput.addEventListener('input', () => {
       this.chatInput.style.height = 'auto';
       this.chatInput.style.height = Math.min(this.chatInput.scrollHeight, 140) + 'px';
     });
 
+    // File input
     this.fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) this.handleFileSelect(file);
     });
 
+    // URL toggle
     this.urlToggleBtn?.addEventListener('click', () => this.toggleURLMode());
 
+    // Clear history button
     document.getElementById('clear-btn')?.addEventListener('click', () => {
       document.getElementById('clear-modal').classList.add('show');
     });
@@ -241,10 +255,12 @@ const UI = {
       this.showToast('💬 Chat dihapus');
     });
 
+    // Logout button
     document.getElementById('logout-btn')?.addEventListener('click', () => {
-      if(typeof handleLogout === 'function') handleLogout(false);
+      handleLogout(false);
     });
 
+    // Welcome chips
     document.querySelectorAll('.chip').forEach(chip => {
       chip.addEventListener('click', () => {
         this.chatInput.value = chip.textContent;
@@ -252,6 +268,7 @@ const UI = {
       });
     });
 
+    // Drag & drop file
     document.addEventListener('dragover', (e) => e.preventDefault());
     document.addEventListener('drop', (e) => {
       e.preventDefault();
@@ -260,26 +277,35 @@ const UI = {
     });
   },
 
+  // ── MESSAGE HANDLING ──
+
   async handleSend() {
     const text = this.chatInput.value.trim();
     if (!text && !window.FileModule.hasFile()) return;
     if (ChatEngine.isProcessing()) return;
 
     const messageText = text || '(lihat file terlampir)';
+
+    // Hide welcome, add user bubble
     this._hideWelcome();
     this.addUserMessage(messageText, window.FileModule.isImage() ? window.FileModule.getContent() : null);
 
+    // Clear input
     this.chatInput.value = '';
     this.chatInput.style.height = 'auto';
 
+    // Show typing indicator
     const typingId = this.showTyping();
     this.setSendDisabled(true);
 
+    // Send to API
     const result = await ChatEngine.sendMessage(messageText);
 
+    // Remove typing
     this.removeTyping(typingId);
     this.setSendDisabled(false);
 
+    // Clear file after send
     if (window.FileModule.hasFile()) {
       window.FileModule.clear();
       this.clearFilePreview();
@@ -291,6 +317,8 @@ const UI = {
       this.addBotMessage(result.reason, result.blocked);
     }
   },
+
+  // ── RENDER MESSAGES ──
 
   addUserMessage(text, imageDataUrl = null) {
     const row = document.createElement('div');
@@ -372,12 +400,16 @@ const UI = {
     });
   },
 
+  // ── FILE HANDLING ──
+
   async handleFileSelect(file) {
     const result = await window.FileModule.readFile(file);
+
     if (!result.ok) {
       this.showToast('❌ ' + result.reason);
       return;
     }
+
     this.filePreviewName.textContent = file.name;
     this.filePreviewBar.classList.add('show');
     this.showToast(`📎 File siap: ${file.name}`);
@@ -390,12 +422,16 @@ const UI = {
     this.filePreviewName.textContent = '';
   },
 
+  // ── URL MODE ──
+
   toggleURLMode() {
     const active = window.URLModule.toggle();
     this.urlToggleBtn.classList.toggle('active', active);
     this.urlBanner.classList.toggle('show', active);
     this.showToast(active ? '🌐 URL Mode aktif' : '🌐 URL Mode nonaktif');
   },
+
+  // ── STATUS ──
 
   setStatus(text) {
     if (!this.statusText || !this.statusDot) return;
@@ -408,6 +444,8 @@ const UI = {
     if (this.sendBtn) this.sendBtn.disabled = disabled;
   },
 
+  // ── WELCOME SCREEN ──
+
   _showWelcome() {
     if (this.welcomeScreen) this.welcomeScreen.classList.remove('hidden');
   },
@@ -415,6 +453,8 @@ const UI = {
   _hideWelcome() {
     if (this.welcomeScreen) this.welcomeScreen.classList.add('hidden');
   },
+
+  // ── TOAST ──
 
   showToast(message) {
     const toast = document.getElementById('toast');
@@ -424,6 +464,8 @@ const UI = {
     setTimeout(() => toast.classList.remove('show'), 2500);
   },
 
+  // ── HELPERS ──
+
   _scrollToBottom() {
     setTimeout(() => {
       this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
@@ -432,27 +474,37 @@ const UI = {
 
   _escapeHTML(str) {
     return str
-      .replace(/&amp;/g, '&')
+      .replace(/&amp;/g, '&')   // unescape dulu (sudah di-encode di security)
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
-      .replace(/</g, '&lt;')
+      .replace(/</g, '&lt;')    // re-escape untuk render aman
       .replace(/>/g, '&gt;')
       .replace(/\n/g, '<br>');
   },
 
+  /** Konversi markdown sederhana ke HTML */
   _formatMarkdown(text) {
+    // Escape HTML dulu untuk safety
     let html = text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
 
+    // Code blocks (triple backtick)
     html = html.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => {
       return `<pre><code class="lang-${lang || 'text'}">${code.trim()}</code></pre>`;
     });
 
+    // Inline code
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Bold
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // Italic
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+    // Newline to BR (tapi tidak dalam pre blocks)
     html = html.replace(/(?!<\/?(pre|code)[^>]*>)\n/g, '<br>');
 
     return html;
@@ -464,16 +516,21 @@ const UI = {
 // ───────────────────────────────────────────
 
 function initApp() {
-  if(typeof guardDashboard === 'function') guardDashboard();
+  // Guard: hanya bisa akses jika login
+  guardDashboard();
 
-  const session = typeof Auth !== 'undefined' ? Auth.getSession() : { username: 'din', displayName: 'Din' };
+  // Ambil session
+  const session = Auth.getSession();
   if (!session) return;
 
+  // Update UI dengan nama user
   const userNameEl = document.getElementById('user-display-name');
   if (userNameEl) userNameEl.textContent = session.displayName;
 
-  if(window.HistoryModule) HistoryModule.init(session.username);
+  // Init history module (per user)
+  HistoryModule.init(session.username);
 
+  // Init UI
   UI.init();
 }
 
