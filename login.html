@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raven OS v5.0 — Login</title>
+  <link rel="stylesheet" href="assets/css/main.css">
+  <style>
+    /* Extra styles khusus login page */
+    .login-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .login-divider::before,
+    .login-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.07);
+    }
+    .login-divider span {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .pwd-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0;
+      transition: var(--transition);
+    }
+    .pwd-toggle:hover { color: var(--text-primary); }
+    #password { padding-right: 40px; }
+
+    .version-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 100px;
+      padding: 3px 10px;
+      font-size: 10px;
+      color: var(--emerald);
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      font-family: var(--font-mono);
+    }
+    .version-badge::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      background: var(--emerald);
+      border-radius: 50%;
+      box-shadow: 0 0 4px var(--emerald);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-bg">
+    <!-- Grid background -->
+    <div class="login-grid"></div>
+
+    <!-- Login Card -->
+    <div class="login-card">
+
+      <!-- Logo + Brand -->
+      <div class="login-logo">
+        <div class="version-badge">v5.0 — SECURE</div>
+        <div class="raven-icon">🐦‍⬛</div>
+        <h1>Raven OS</h1>
+        <p>Secure AI Terminal</p>
+      </div>
+
+      <!-- Error message -->
+      <div id="login-error" class="login-error"></div>
+
+      <!-- Login Form -->
+      <form id="login-form" autocomplete="off">
+
+        <!-- Username -->
+        <div class="field-group">
+          <label class="field-label" for="username">Username</label>
+          <div class="field-wrap">
+            <input
+              type="text"
+              id="username"
+              class="field-input"
+              placeholder="masukkan username"
+              autocomplete="username"
+              spellcheck="false"
+            >
+            <span class="field-icon">👤</span>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="field-group">
+          <label class="field-label" for="password">Password</label>
+          <div class="field-wrap">
+            <input
+              type="password"
+              id="password"
+              class="field-input"
+              placeholder="••••••••••"
+              autocomplete="current-password"
+            >
+            <span class="field-icon">🔒</span>
+            <button type="button" class="pwd-toggle" id="pwd-toggle" title="Toggle password">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="login-btn" id="login-btn">
+          <div class="btn-shine"></div>
+          <span id="btn-text">Enter Raven OS</span>
+        </button>
+
+      </form>
+
+      <!-- Divider + Hint -->
+      <div class="login-divider"><span>Demo Credentials</span></div>
+      <div class="login-hint">
+        user: <span>din</span> / pass: <span>raven2025</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="assets/js/auth.js"></script>
+  <script>
+    // Toggle password visibility
+    document.getElementById('pwd-toggle').addEventListener('click', function() {
+      const pwd = document.getElementById('password');
+      const isHidden = pwd.type === 'password';
+      pwd.type = isHidden ? 'text' : 'password';
+      this.textContent = isHidden ? '🙈' : '👁️';
+    });
+
+    // Init login page (juga melakukan guardLogin)
+    initLoginPage();
+  </script>
+</body>
+</html>
